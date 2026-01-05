@@ -1,22 +1,26 @@
-#include "TcpServer.h"
+ï»¿#include "TcpServer.h"
+#include "converter.h"
 #include <iostream>
 
 int main() {
+    SetConsoleOutputCP(65001);
     TcpServer server(8080);
     server.Start();
 
-    // ¸ŞÀÎ ½º·¹µå´Â °ü¸®ÀÚ ÀÔ·ÂÀ» Ã³¸®ÇÔ
+    // ë©”ì¸ ìŠ¤ë ˆë“œëŠ” ê´€ë¦¬ì ì…ë ¥ì„ ì²˜ë¦¬í•¨
     while (true) {
         int targetId;
         std::string messageContent;
 
-        std::cout << "\n[°ü¸®ÀÚ ¸í·É] º¸³¾ Client ID¿Í ¸Ş½ÃÁö¸¦ ÀÔ·ÂÇÏ¼¼¿ä (¿¹: 1 Hello): ";
+        std::cout << "\n[ê´€ë¦¬ì ëª…ë ¹] ë³´ë‚¼ Client IDì™€ ë©”ì‹œì§€ë¥¼ ì…ë ¥í•˜ì„¸ìš” (ì˜ˆ: 1 Hello): ";
         if (!(std::cin >> targetId >> messageContent)) break;
 
-        // º¸³¾ JSON µ¥ÀÌÅÍ »ı¼º
+        std::string utf8Content = AnsiToUtf8(messageContent);
+
+        // ë³´ë‚¼ JSON ë°ì´í„° ìƒì„±
         json msg;
         msg["type"] = "admin_message";
-        msg["content"] = messageContent;
+        msg["content"] = utf8Content;
         msg["timestamp"] = time(0);
 
         server.SendToClient(targetId, msg);

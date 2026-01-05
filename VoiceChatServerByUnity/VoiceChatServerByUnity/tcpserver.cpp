@@ -1,9 +1,15 @@
-#include "TcpServer.h"
+ï»¿#include "TcpServer.h"
 #include <iostream>
 #include <fstream>
 
 TcpServer::TcpServer(int port) : port(port), serverSocket(INVALID_SOCKET), isRunning(false) {
     WSADATA wsaData;
+
+    // í´ë¼ì´ì–¸íŠ¸ê°€ ì„œë²„ì— ì ‘ì†í–ˆì„ ë•Œ 
+    access_return_data["type"] = "connect_result";
+    access_return_data["content"] = true;
+    access_return_data["timestamp"] = 0;
+
     WSAStartup(MAKEWORD(2, 2), &wsaData);
 }
 
@@ -31,9 +37,9 @@ void TcpServer::Start() {
     }
 
     isRunning = true;
-    std::cout << "=== ¼­¹ö ½ÃÀÛ (Port: " << port << ") ===" << std::endl;
+    std::cout << "=== ì„œë²„ ì‹œì‘ (Port: " << port << ") ===" << std::endl;
 
-    // Á¢¼Ó ´ë±â¸¦ º°µµ ½º·¹µå¿¡¼­ ½ÇÇà
+    // ì ‘ì† ëŒ€ê¸°ë¥¼ ë³„ë„ ìŠ¤ë ˆë“œì—ì„œ ì‹¤í–‰
     std::thread(&TcpServer::AcceptLoop, this).detach();
 }
 
@@ -48,11 +54,20 @@ void TcpServer::AcceptLoop() {
             int id = nextClientId++;
             clients[id] = clientSocket;
 
-            // ÀÔÀå ·Î±×
-            std::cout << "[ÀÔÀå] Client ID: " << id << " ¿¬°áµÊ." << std::endl;
+            // ì…ì¥ ë¡œê·¸
+            std::cout << "[ì…ì¥] Client ID: " << id << " ì—°ê²°ë¨." << std::endl;
 
-            // °³º° Å¬¶óÀÌ¾ğÆ®¸¦ ´ã´çÇÒ ½º·¹µå »ı¼º
+            // ê°œë³„ í´ë¼ì´ì–¸íŠ¸ë¥¼ ë‹´ë‹¹í•  ìŠ¤ë ˆë“œ ìƒì„±
             std::thread(&TcpServer::HandleClient, this, clientSocket, id).detach();
+            
+            if (clients.count(id)) {
+                std::string msg = access_return_data.dump(); // JSONì„ ë¬¸ìì—´ë¡œ ë³€í™˜
+                send(clients[id], msg.c_str(), msg.length(), 0);
+                std::cout << "[ì ‘ì† ì™„ë£Œ í›„ ì „ì†¡ to " << id << "] " << msg << std::endl;
+            }
+            else {
+                std::cout << "[ì ‘ì† ì™„ë£Œ í›„ ì „ì†¡ ì‹¤íŒ¨] ì¡´ì¬í•˜ì§€ ì•ŠëŠ” Client ID: " << id << std::endl;
+            }
         }
     }
 }
@@ -72,20 +87,30 @@ void TcpServer::HandleClient(SOCKET clientSocket, int clientId) {
         std::string rawData(buffer, bytesReceived);
 
         try {
-            // JSON ÆÄ½Ì
+            // JSON íŒŒì‹±
             json receivedJson = json::parse(rawData);
-
-            // ·Î±× Ãâ·Â
-            std::cout << "[¼ö½Å from " << clientId << "] " << receivedJson.dump() << std::endl;
-
-            // (¿É¼Ç) ÆÄÀÏ ÀúÀå
+            std::string content = receivedJson["common"]["content"];
+            std::cout << content << std::endl;
+            if (nickname != content)
+            {
+                nickname = content;
+                std::cout << "ë‹‰ë„¤ì„ ì €ì¥ì™„ë£Œ" << std::endl;
+            }
+            else
+            {
+                std::cout << "ë‹‰ë„¤ì„ì¤‘ë³µ" << std::endl;
+            }
+            // ë¡œê·¸ ì¶œë ¥
+            //std::cout << "[ìˆ˜ì‹  from " << clientId << "] " << receivedJson.dump() << std::endl;
+            // 
+            // (ì˜µì…˜) íŒŒì¼ ì €ì¥
             std::ofstream logFile("server_log.txt", std::ios::app);
             logFile << "[Client " << clientId << "] " << receivedJson.dump() << std::endl;
             logFile.close();
 
         }
         catch (json::parse_error& e) {
-            std::cerr << "[JSON ¿¡·¯] " << e.what() << std::endl;
+            std::cerr << "[JSON ì—ëŸ¬] " << e.what() << std::endl;
         }
     }
 }
@@ -95,18 +120,18 @@ void TcpServer::RemoveClient(int clientId) {
     if (clients.count(clientId)) {
         closesocket(clients[clientId]);
         clients.erase(clientId);
-        std::cout << "[ÅğÀå] Client ID: " << clientId << " ¿¬°á ÇØÁ¦." << std::endl;
+        std::cout << "[í‡´ì¥] Client ID: " << clientId << " ì—°ê²° í•´ì œ." << std::endl;
     }
 }
 
 void TcpServer::SendToClient(int clientId, const json& data) {
     std::lock_guard<std::mutex> lock(clientMutex);
     if (clients.count(clientId)) {
-        std::string msg = data.dump(); // JSONÀ» ¹®ÀÚ¿­·Î º¯È¯
+        std::string msg = data.dump(); // JSONì„ ë¬¸ìì—´ë¡œ ë³€í™˜
         send(clients[clientId], msg.c_str(), msg.length(), 0);
-        std::cout << "[Àü¼Û to " << clientId << "] " << msg << std::endl;
+        std::cout << "[ì „ì†¡ to " << clientId << "] " << msg << std::endl;
     }
     else {
-        std::cout << "[Àü¼Û ½ÇÆĞ] Á¸ÀçÇÏÁö ¾Ê´Â Client ID: " << clientId << std::endl;
+        std::cout << "[ì „ì†¡ ì‹¤íŒ¨] ì¡´ì¬í•˜ì§€ ì•ŠëŠ” Client ID: " << clientId << std::endl;
     }
 }

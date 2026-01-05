@@ -7,14 +7,7 @@ using System.Collections.Concurrent;
 using UnityEngine.InputSystem;
 
 // JSON 직렬화를 위한 데이터 클래스
-[Serializable]
-public class PacketData
-{
-    public string type;
-    public string content;
-    public float x;
-    public float y;
-}
+
 
 public class NetworkClient : MonoBehaviour
 {
@@ -40,7 +33,7 @@ public class NetworkClient : MonoBehaviour
     //     ConnectToServer();
     // }
 
-    public void ConnectToServer()
+    public void ConnectToServer(string p_nickname)
     {
         try
         {
@@ -54,27 +47,43 @@ public class NetworkClient : MonoBehaviour
             receiveThread.IsBackground = true;
             receiveThread.Start();
 
-            // 입장 알림 보내기
-            SendJson("login", "Unity Client Entered", transform.position);
+            LoginPacket t_loginpacket = new LoginPacket();
+            t_loginpacket.common.type = "login";
+            t_loginpacket.common.content = p_nickname;
+
+            // 입장 요청 보내기(닉네임과 함께)
+            SendJson(ref t_loginpacket);
         }
         catch (Exception e)
         {
-            Debug.LogError($"접속 실패: {e.Message}");
+            if(e.Message == "대상 컴퓨터에서 연결을 거부했으므로 연결하지 못했습니다.")
+            {
+                // 여기에 TMP 오브젝트 연동해야 함
+            }
         }
     }
 
     // 서버로 JSON 데이터 전송 함수
-    public void SendJson(string type, string msg, Vector3 pos)
+    // public void SendJson(string type, string msg, Vector3 pos)
+    // {
+    //     if (client == null || !client.Connected) return;
+
+    //     PacketData packet = new PacketData();
+    //     packet.common.type = type;
+    //     packet.common.content = msg;
+    //     packet.x = pos.x;
+    //     packet.y = pos.y;
+
+    //     string json = JsonUtility.ToJson(packet);
+    //     byte[] data = Encoding.UTF8.GetBytes(json);
+    //     stream.Write(data, 0, data.Length);
+    // }
+
+    public void SendJson<T>(ref T p_packet)
     {
-        if (client == null || !client.Connected) return;
+        if(client == null || !client.Connected) return;
 
-        PacketData packet = new PacketData();
-        packet.type = type;
-        packet.content = msg;
-        packet.x = pos.x;
-        packet.y = pos.y;
-
-        string json = JsonUtility.ToJson(packet);
+        string json = JsonUtility.ToJson(p_packet);
         byte[] data = Encoding.UTF8.GetBytes(json);
         stream.Write(data, 0, data.Length);
     }
@@ -119,8 +128,7 @@ public class NetworkClient : MonoBehaviour
     // 테스트: 스페이스바를 누르면 현재 위치 전송
     void OnSpace()
     {
-        Debug.Log($"스페이스바 입력");
-        SendJson("move", "Moving", transform.position);
+
     }
 
     void OnApplicationQuit()

@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <map>
@@ -9,7 +9,7 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
-// JSON ¶óÀÌºê·¯¸® (json.hpp°¡ °°Àº Æú´õ¿¡ ÀÖ´Ù°í °¡Á¤)
+// JSON ë¼ì´ë¸ŒëŸ¬ë¦¬ (json.hppê°€ ê°™ì€ í´ë”ì— ìˆë‹¤ê³  ê°€ì •)
 #include "json.hpp"
 using json = nlohmann::json;
 
@@ -18,24 +18,27 @@ public:
     TcpServer(int port);
     ~TcpServer();
 
-    void Start(); // ¼­¹ö ½ÃÀÛ (¸®½º´×)
-    void SendToClient(int clientId, const json& data); // Æ¯Á¤ Å¬¶óÀÌ¾ğÆ®¿¡°Ô Àü¼Û
+    void Start(); // ì„œë²„ ì‹œì‘ (ë¦¬ìŠ¤ë‹)
+    void SendToClient(int clientId, const json& data); // íŠ¹ì • í´ë¼ì´ì–¸íŠ¸ì—ê²Œ ì „ì†¡
 
 private:
-    void AcceptLoop(); // Å¬¶óÀÌ¾ğÆ® Á¢¼Ó ´ë±â ·çÇÁ
-    void HandleClient(SOCKET clientSocket, int clientId); // °³º° Å¬¶óÀÌ¾ğÆ® Åë½Å ´ã´ç
-    void RemoveClient(int clientId); // ÅğÀå Ã³¸®
+    void AcceptLoop(); // í´ë¼ì´ì–¸íŠ¸ ì ‘ì† ëŒ€ê¸° ë£¨í”„
+    void HandleClient(SOCKET clientSocket, int clientId); // ê°œë³„ í´ë¼ì´ì–¸íŠ¸ í†µì‹  ë‹´ë‹¹
+    void RemoveClient(int clientId); // í‡´ì¥ ì²˜ë¦¬
+    std::string AnsiToUtf8(const std::string& ansiStr); // ì½˜ì†”ì…ë ¥(CP949)ì„ UTF-8ë¡œ ë³€í™˜
 
     SOCKET serverSocket;
     int port;
     bool isRunning;
+    json access_return_data;
+    std::string nickname;
 
-    // Å¬¶óÀÌ¾ğÆ® °ü¸®¸¦ À§ÇÑ ¸Ê (ID -> ¼ÒÄÏ)
+    // í´ë¼ì´ì–¸íŠ¸ ê´€ë¦¬ë¥¼ ìœ„í•œ ë§µ (ID -> ì†Œì¼“)
     std::map<int, SOCKET> clients;
 
-    // ½º·¹µå Ãæµ¹ ¹æÁö¸¦ À§ÇÑ ¹ÂÅØ½º
+    // ìŠ¤ë ˆë“œ ì¶©ëŒ ë°©ì§€ë¥¼ ìœ„í•œ ë®¤í…ìŠ¤
     std::mutex clientMutex;
 
-    // Å¬¶óÀÌ¾ğÆ® ID ºÎ¿©¿ë Ä«¿îÅÍ
+    // í´ë¼ì´ì–¸íŠ¸ ID ë¶€ì—¬ìš© ì¹´ìš´í„°
     int nextClientId = 1;
 }; 
