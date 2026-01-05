@@ -1,0 +1,112 @@
+#include "TcpServer.h"
+#include <iostream>
+#include <fstream>
+
+TcpServer::TcpServer(int port) : port(port), serverSocket(INVALID_SOCKET), isRunning(false) {
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+}
+
+TcpServer::~TcpServer() {
+    isRunning = false;
+    closesocket(serverSocket);
+    WSACleanup();
+}
+
+void TcpServer::Start() {
+    serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    sockaddr_in serverAddr;
+    serverAddr.sin_family = AF_INET;
+    serverAddr.sin_addr.s_addr = INADDR_ANY;
+    serverAddr.sin_port = htons(port);
+
+    if (bind(serverSocket, (sockaddr*)&serverAddr, sizeof(serverAddr)) == SOCKET_ERROR) {
+        std::cerr << "Binding failed!" << std::endl;
+        return;
+    }
+
+    if (listen(serverSocket, SOMAXCONN) == SOCKET_ERROR) {
+        std::cerr << "Listening failed!" << std::endl;
+        return;
+    }
+
+    isRunning = true;
+    std::cout << "=== 서버 시작 (Port: " << port << ") ===" << std::endl;
+
+    // 접속 대기를 별도 스레드에서 실행
+    std::thread(&TcpServer::AcceptLoop, this).detach();
+}
+
+void TcpServer::AcceptLoop() {
+    while (isRunning) {
+        sockaddr_in clientAddr;
+        int clientSize = sizeof(clientAddr);
+        SOCKET clientSocket = accept(serverSocket, (sockaddr*)&clientAddr, &clientSize);
+
+        if (clientSocket != INVALID_SOCKET) {
+            std::lock_guard<std::mutex> lock(clientMutex);
+            int id = nextClientId++;
+            clients[id] = clientSocket;
+
+            // 입장 로그
+            std::cout << "[입장] Client ID: " << id << " 연결됨." << std::endl;
+
+            // 개별 클라이언트를 담당할 스레드 생성
+            std::thread(&TcpServer::HandleClient, this, clientSocket, id).detach();
+        }
+    }
+}
+
+void TcpServer::HandleClient(SOCKET clientSocket, int clientId) {
+    char buffer[4096];
+
+    while (isRunning) {
+        ZeroMemory(buffer, 4096);
+        int bytesReceived = recv(clientSocket, buffer, 4096, 0);
+
+        if (bytesReceived <= 0) {
+            RemoveClient(clientId);
+            break;
+        }
+
+        std::string rawData(buffer, bytesReceived);
+
+        try {
+            // JSON 파싱
+            json receivedJson = json::parse(rawData);
+
+            // 로그 출력
+            std::cout << "[수신 from " << clientId << "] " << receivedJson.dump() << std::endl;
+
+            // (옵션) 파일 저장
+            std::ofstream logFile("server_log.txt", std::ios::app);
+            logFile << "[Client " << clientId << "] " << receivedJson.dump() << std::endl;
+            logFile.close();
+
+        }
+        catch (json::parse_error& e) {
+            std::cerr << "[JSON 에러] " << e.what() << std::endl;
+        }
+    }
+}
+
+void TcpServer::RemoveClient(int clientId) {
+    std::lock_guard<std::mutex> lock(clientMutex);
+    if (clients.count(clientId)) {
+        closesocket(clients[clientId]);
+        clients.erase(clientId);
+        std::cout << "[퇴장] Client ID: " << clientId << " 연결 해제." << std::endl;
+    }
+}
+
+void TcpServer::SendToClient(int clientId, const json& data) {
+    std::lock_guard<std::mutex> lock(clientMutex);
+    if (clients.count(clientId)) {
+        std::string msg = data.dump(); // JSON을 문자열로 변환
+        send(clients[clientId], msg.c_str(), msg.length(), 0);
+        std::cout << "[전송 to " << clientId << "] " << msg << std::endl;
+    }
+    else {
+        std::cout << "[전송 실패] 존재하지 않는 Client ID: " << clientId << std::endl;
+    }
+}

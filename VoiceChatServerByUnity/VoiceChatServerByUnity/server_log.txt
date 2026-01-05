@@ -1,0 +1,15 @@
+[Client 1] {"content":"Unity Client Entered","type":"login","x":0.0,"y":0.0}
+[Client 2] {"content":"Unity Client Entered","type":"login","x":0.0,"y":0.0}
+[Client 3] {"content":"Unity Client Entered","type":"login","x":0.0,"y":0.0}
+[Client 1] {"content":"Unity Client Entered","type":"login","x":0.0,"y":0.0}
+[Client 2] {"content":"Unity Client Entered","type":"login","x":0.0,"y":0.0}
+[Client 3] {"content":"Unity Client Entered","type":"login","x":0.0,"y":0.0}
+[Client 4] {"content":"Unity Client Entered","type":"login","x":0.0,"y":0.0}
+[Client 5] {"content":"Unity Client Entered","type":"login","x":0.0,"y":0.0}
+[Client 5] {"content":"Moving","type":"move","x":0.0,"y":0.0}
+[Client 5] {"content":"Moving","type":"move","x":0.0,"y":0.0}
+[Client 5] {"content":"Moving","type":"move","x":-4.126999855041504,"y":0.0}
+[Client 1] {"content":"Unity Client Entered","type":"login","x":0.0,"y":0.0}
+[Client 1] {"content":"Moving","type":"move","x":0.0,"y":0.0}
+[Client 1] {"content":"Moving","type":"move","x":0.0,"y":0.0}
+[Client 2] {"content":"Unity Client Entered","type":"login","x":0.0,"y":0.0}
