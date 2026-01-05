@@ -1,0 +1,123 @@
+# =============== #
+ 
+# Unity generated #
+ 
+# =============== #
+ 
+Temp
+ 
+Obj
+ 
+UnityGenerated
+ 
+Library
+
+Temp.meta
+
+Logs
+ 
+# ===================================== #
+ 
+# Visual Studio  MonoDevelop generated #
+ 
+# ===================================== #
+ 
+ExportedObj
+ 
+*.svd
+ 
+*.userprefs
+ 
+*.csproj
+ 
+*.pidb
+ 
+*.suo
+ 
+*.sln
+ 
+*.user
+ 
+*.unityproj
+ 
+*.booproj
+
+*.apk
+ 
+# ============ #
+ 
+# OS generated #
+ 
+# ============ #
+ 
+.DS_Store
+ 
+.DS_Store
+ 
+._
+
+*.vscode
+ 
+.Spotlight-V100
+ 
+.Trashes
+ 
+Icon
+ 
+ehthumbs.db
+ 
+Thumbs.db
+ 
+GraphicsSettings.asset
+ 
+ProjectSettings.asset
+
+# UserLayout #
+UserSettings
+
+# ----------------------- C++ ignore ----------------------- #
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Linker files
+*.ilk
+
+# Debugger Files
+*.pdb
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# debug information files
+*.dwo
+
+# Custom
+*.vs
+[Xx]64
