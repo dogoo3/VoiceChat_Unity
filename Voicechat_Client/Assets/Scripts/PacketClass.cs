@@ -3,23 +3,23 @@
 using System;
 
 [Serializable]
-public struct CommonPacket
+public struct CommonPacket<T> // content의 type이 뭐가 될지 모르니 Generic으로 설정
 {
     public string type;
-    public string content;
+    public T content;
 }
 
 [Serializable]
-public struct PacketData
+public struct PacketData<T>
 {
-    public CommonPacket common;
+    public CommonPacket<T> common;
     public string timestamp;
 }
 
 [Serializable]
-public struct LoginPacket
+public struct LoginPacket<T>
 {
-    public CommonPacket common;
+    public CommonPacket<T> common;
 }
 
 [Serializable]
@@ -28,4 +28,17 @@ public struct GET_NicknameCheck
     public string type;
     public bool content;
     public string timestamp;
+}
+
+[Serializable]
+public struct ArrayTestPacket<T>
+{
+    public CommonPacket<T> common;
+}
+
+[Serializable]
+public struct GET_ArrayTestPacket
+{
+    public string type;
+    public float[] content;
 }

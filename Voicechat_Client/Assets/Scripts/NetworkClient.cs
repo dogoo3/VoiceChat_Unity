@@ -47,7 +47,7 @@ public class NetworkClient : MonoBehaviour
             receiveThread.IsBackground = true;
             receiveThread.Start();
 
-            LoginPacket t_loginpacket = new LoginPacket();
+            LoginPacket<string> t_loginpacket = new LoginPacket<string>();
             t_loginpacket.common.type = "login";
             t_loginpacket.common.content = p_nickname;
 
@@ -119,7 +119,7 @@ public class NetworkClient : MonoBehaviour
             // Debug.Log($"[서버로부터 수신]: {msg}");
             
             // 필요하다면 여기서 JSON 파싱하여 로직 수행
-            CommonPacket receivedData = JsonUtility.FromJson<CommonPacket>(msg);
+            CommonPacket<string> receivedData = JsonUtility.FromJson<CommonPacket<string>>(msg);
             switch(receivedData.type)
             {
                 case "nickname_check_result":
@@ -135,6 +135,12 @@ public class NetworkClient : MonoBehaviour
                         tmp_errormessage.text = "중복된 닉네임입니다. 다른 닉네임을 입력하세요.";
                         // 닉네임 재입력 요구
                     }
+                    break;
+                case "array_test_result":
+                    GET_ArrayTestPacket t_asdf = JsonUtility.FromJson<GET_ArrayTestPacket>(msg);
+                    for(int i=0;i<t_asdf.content.Length;i++)
+                        Debug.Log(t_asdf.content[i]);
+                    Debug.Log(t_asdf.type);
                     break;
             }
         }

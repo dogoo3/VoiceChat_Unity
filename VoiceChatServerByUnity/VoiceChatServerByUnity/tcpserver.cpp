@@ -74,11 +74,11 @@ void TcpServer::AcceptLoop() {
 }
 
 void TcpServer::HandleClient(SOCKET clientSocket, int clientId) {
-    char buffer[4096];
+    char buffer[MAX_BUFFER_SIZE];
 
     while (isRunning) {
-        ZeroMemory(buffer, 4096);
-        int bytesReceived = recv(clientSocket, buffer, 4096, 0);
+        ZeroMemory(buffer, MAX_BUFFER_SIZE);
+        int bytesReceived = recv(clientSocket, buffer, MAX_BUFFER_SIZE, 0);
 
         if (bytesReceived <= 0) {
             RemoveClient(clientId);
@@ -90,7 +90,9 @@ void TcpServer::HandleClient(SOCKET clientSocket, int clientId) {
         try {
             // JSON 파싱
             json receivedJson = json::parse(rawData);
-            if (receivedJson["common"]["type"] == "login") // 로그인 프로토콜이 들어왔을 때
+            const std::string type_name = receivedJson["common"]["type"];
+            std::cout << clientId << "에게 " << type_name << "프로토콜 들어옴!" << std::endl;
+            if (type_name == "login") // 로그인 프로토콜이 들어왔을 때
             {
                 std::string nickname = receivedJson["common"]["content"];
                 bool isDuplicate = false;
@@ -122,6 +124,21 @@ void TcpServer::HandleClient(SOCKET clientSocket, int clientId) {
                     SendToClient(clientId, access_return_data);
                 }
             }
+            if (type_name == "arraytest")
+            {
+                std::cout << receivedJson["common"]["content"] << std::endl;
+                std::cout << sizeof(receivedJson["common"]["content"]) << std::endl;
+                std::cout << sizeof(receivedJson["common"]["content"][0]) << std::endl;
+                std::cout << receivedJson["common"]["content"].size() << std::endl;
+
+                json tempjson;
+                float asd[3] = { receivedJson["common"]["content"][0], receivedJson["common"]["content"][12], receivedJson["common"]["content"][358] };
+                tempjson["type"] = "array_test_result";
+                tempjson["content"] = asd;
+
+                SendToClient(clientId, tempjson);
+            }
+            
 
             // 로그 출력
             //std::cout << "[수신 from " << clientId << "] " << receivedJson.dump() << std::endl;
