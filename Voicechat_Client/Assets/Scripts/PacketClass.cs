@@ -12,8 +12,7 @@ public struct CommonPacket
 [Serializable]
 public struct PacketData
 {
-    public string type;
-    public string content;
+    public CommonPacket common;
     public string timestamp;
 }
 
@@ -21,4 +20,12 @@ public struct PacketData
 public struct LoginPacket
 {
     public CommonPacket common;
+}
+
+[Serializable]
+public struct GET_NicknameCheck
+{
+    public string type;
+    public bool content;
+    public string timestamp;
 }

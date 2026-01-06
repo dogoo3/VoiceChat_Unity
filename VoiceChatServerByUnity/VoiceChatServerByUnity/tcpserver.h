@@ -9,6 +9,13 @@
 
 #pragma comment(lib, "ws2_32.lib")
 
+struct ClientData
+{
+    SOCKET socket; // 클라이언트 소켓
+    std::string nickname; // 클라이언트 닉네임
+    bool isLobby = true; // 클라이언트가 로비에 있는지 아닌지 확인(접속하면 로비로 가기 때문에 True)
+};
+
 // JSON 라이브러리 (json.hpp가 같은 폴더에 있다고 가정)
 #include "json.hpp"
 using json = nlohmann::json;
@@ -34,7 +41,7 @@ private:
     std::string nickname;
 
     // 클라이언트 관리를 위한 맵 (ID -> 소켓)
-    std::map<int, SOCKET> clients;
+    std::map<int, ClientData> clients;
 
     // 스레드 충돌 방지를 위한 뮤텍스
     std::mutex clientMutex;

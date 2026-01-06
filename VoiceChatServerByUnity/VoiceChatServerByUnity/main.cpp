@@ -15,6 +15,7 @@ int main() {
         std::cout << "\n[관리자 명령] 보낼 Client ID와 메시지를 입력하세요 (예: 1 Hello): ";
         if (!(std::cin >> targetId >> messageContent)) break;
 
+        // CP949형태로 콘솔에 입력된 데이터를 UTF8로 변환(한국어 문자열)
         std::string utf8Content = AnsiToUtf8(messageContent);
 
         // 보낼 JSON 데이터 생성

@@ -5,16 +5,21 @@ using System.Threading;
 using UnityEngine;
 using System.Collections.Concurrent;
 using UnityEngine.InputSystem;
+using TMPro;
 
 // JSON 직렬화를 위한 데이터 클래스
-
-
 public class NetworkClient : MonoBehaviour
 {
     public static NetworkClient instance;
 
     [SerializeField] private string ip = "127.0.0.1";
     [SerializeField] private int port = 8080;
+    [Space(50)]
+    [SerializeField] private TMP_Text tmp_errormessage;
+    [Space(50)]
+    [SerializeField] private GameObject loginUI;
+    [SerializeField] private GameObject lobbyUI;
+    [SerializeField] private GameObject roomUI;
 
     private TcpClient client;
     private NetworkStream stream;
@@ -27,11 +32,6 @@ public class NetworkClient : MonoBehaviour
     private void Awake() {
         instance = this;
     }
-
-    // void Start()
-    // {
-    //     ConnectToServer();
-    // }
 
     public void ConnectToServer(string p_nickname)
     {
@@ -119,8 +119,24 @@ public class NetworkClient : MonoBehaviour
             // Debug.Log($"[서버로부터 수신]: {msg}");
             
             // 필요하다면 여기서 JSON 파싱하여 로직 수행
-            PacketData receivedData = JsonUtility.FromJson<PacketData>(msg);
-            Debug.Log(receivedData.content);
+            CommonPacket receivedData = JsonUtility.FromJson<CommonPacket>(msg);
+            switch(receivedData.type)
+            {
+                case "nickname_check_result":
+                    GET_NicknameCheck t_receivedData = JsonUtility.FromJson<GET_NicknameCheck>(msg);
+                    if(t_receivedData.content) // 닉네임이 중복되지 않으면(true)
+                    {
+                        loginUI.SetActive(false);
+                        lobbyUI.SetActive(true);
+                        // 로비 화면으로 이동
+                    }
+                    else
+                    {
+                        tmp_errormessage.text = "중복된 닉네임입니다. 다른 닉네임을 입력하세요.";
+                        // 닉네임 재입력 요구
+                    }
+                    break;
+            }
         }
     }
 
@@ -128,7 +144,7 @@ public class NetworkClient : MonoBehaviour
     // 테스트: 스페이스바를 누르면 현재 위치 전송
     void OnSpace()
     {
-
+        
     }
 
     void OnApplicationQuit()
