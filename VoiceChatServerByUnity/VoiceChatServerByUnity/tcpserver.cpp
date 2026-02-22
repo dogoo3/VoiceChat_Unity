@@ -148,7 +148,7 @@ void TcpServer::HandleClient(SOCKET clientSocket, int clientId) {
                     }
                 }
             }
-            if (type_name == "arraytest")
+            else if (type_name == "arraytest")
             {
                 std::cout << receivedJson["common"]["content"] << std::endl;
                 std::cout << sizeof(receivedJson["common"]["content"]) << std::endl;
@@ -161,6 +161,81 @@ void TcpServer::HandleClient(SOCKET clientSocket, int clientId) {
                 tempjson["content"] = asd;
 
                 SendToClient(clientId, tempjson);
+            }
+            else if (type_name == "userexit") // 특정한 유저가 나갔으면
+            {
+                // 다른 유저들에게 그 플레이어가 나갔다는 정보를 보낸다
+                json tempjson;
+                tempjson["type"] = "anotherexit";
+                tempjson["exit_nickname"] = clients[clientId].nickname;
+
+                for (auto iter = clients.begin(); iter != clients.end(); iter++)
+                {
+                    if (iter->first != clientId) // 나간 사람의 클라이언트 ID가 아닌 사람들에게 보낸다
+                    {
+                        SendToClient(iter->first, tempjson);
+                    }
+                }
+
+                // 그 유저에게는 나가도 된다는 packet을 보낸다
+                tempjson["type"] = "myexit";
+                SendToClient(clientId, tempjson);
+                RemoveClient(clientId);
+            }
+            else if (type_name == "soundframe")
+            {
+                std::cout << "----------------------------" << std::endl;
+                std::cout << sizeof(receivedJson["common"]["content"]) << std::endl;
+                std::cout << receivedJson["common"]["content"].size() << std::endl;
+                // 보낼 데이터를 정하고, 음성 데이터를 바이너리화한다
+                std::string typeStr = "anotheraudio"; // 또는 receivedJson["common"]["type"];
+                int channel = receivedJson["channel"]; // 정수라고 가정
+                std::vector<float> audioData = receivedJson["common"]["content"].get<std::vector<float>>();
+
+                // 바이너리 버퍼 생성에 필요한 크기를 계산한다
+                int typeLen = typeStr.length();
+                int floatCount = audioData.size();
+
+                // Payload 크기 = (Type길이 변수) + (Type문자열) + (Channel 변수) + (Float개수 변수) + (Float배열)
+                int payloadSize = sizeof(int) + typeLen + sizeof(int) + sizeof(int) + (floatCount * sizeof(float));
+                int totalSize = sizeof(int) + payloadSize; // 맨 앞 Payload 크기(4바이트) 포함
+                
+                // 데이터를 담을 버퍼 할당 및 복사
+                std::vector<char> sendBuffer(totalSize);
+                int offset = 0;
+
+                // (1) Payload 전체 크기
+                memcpy(sendBuffer.data() + offset, &payloadSize, sizeof(int)); offset += sizeof(int);
+
+                // (2) Type 문자열 길이
+                memcpy(sendBuffer.data() + offset, &typeLen, sizeof(int)); offset += sizeof(int);
+
+                // (3) Type 문자열 데이터
+                memcpy(sendBuffer.data() + offset, typeStr.c_str(), typeLen); offset += typeLen;
+
+                // (4) Channel 번호
+                memcpy(sendBuffer.data() + offset, &channel, sizeof(int)); offset += sizeof(int);
+
+                // (5) Float 데이터 개수
+                memcpy(sendBuffer.data() + offset, &floatCount, sizeof(int)); offset += sizeof(int);
+
+                // (6) Float 배열 데이터
+                memcpy(sendBuffer.data() + offset, audioData.data(), floatCount * sizeof(float)); offset += (floatCount * sizeof(float));
+
+                // 받은 사람의 client를 제외한 모든 client에게 보내준다
+                //json tempjson;
+                //tempjson["type"] = "anotheraudio";
+                //tempjson["channel"] = receivedJson["channel"];
+                //std::cout << receivedJson["channel"] << std::endl;
+
+                for (auto iter = clients.begin(); iter != clients.end(); iter++)
+                {
+                    if (iter->first != clientId)
+                    {
+                        send(iter->second.socket, sendBuffer.data(), totalSize, 0);
+                        //SendToClient(iter->first, tempjson);
+                    }
+                }
             }
             
 
@@ -188,12 +263,39 @@ void TcpServer::RemoveClient(int clientId) {
     }
 }
 
+//void TcpServer::SendToClient(int clientId, const json& data) {
+//    std::lock_guard<std::mutex> lock(clientMutex);
+//    if (clients.count(clientId)) {
+//        std::string msg = data.dump(); // JSON을 문자열로 변환
+//        send(clients[clientId].socket, msg.c_str(), msg.length(), 0);
+//        std::cout << "[전송 to " << clientId << "] " << msg << std::endl;
+//    }
+//    else {
+//        std::cout << "[전송 실패] 존재하지 않는 Client ID: " << clientId << std::endl;
+//    }
+//}
+
 void TcpServer::SendToClient(int clientId, const json& data) {
     std::lock_guard<std::mutex> lock(clientMutex);
+
     if (clients.count(clientId)) {
         std::string msg = data.dump(); // JSON을 문자열로 변환
-        send(clients[clientId].socket, msg.c_str(), msg.length(), 0);
-        std::cout << "[전송 to " << clientId << "] " << msg << std::endl;
+        int payloadSize = msg.length(); // 실제 JSON 데이터의 길이
+
+        // 1. 전송할 전체 버퍼 생성: 4바이트(크기 정보) + 실제 데이터 길이
+        std::vector<char> sendBuffer(sizeof(int) + payloadSize);
+
+        // 2. 맨 앞 4바이트에 payloadSize 값을 복사
+        memcpy(sendBuffer.data(), &payloadSize, sizeof(int));
+
+        // 3. 그 뒤(4바이트 이후)에 실제 JSON 문자열 데이터를 복사
+        memcpy(sendBuffer.data() + sizeof(int), msg.c_str(), payloadSize);
+
+        // 4. 합쳐진 바이너리 버퍼를 전송
+        send(clients[clientId].socket, sendBuffer.data(), sendBuffer.size(), 0);
+
+        // 로그 출력 (디버깅용)
+        std::cout << "[전송 to " << clientId << "] " << msg << " (Payload: " << payloadSize << " bytes)" << std::endl;
     }
     else {
         std::cout << "[전송 실패] 존재하지 않는 Client ID: " << clientId << std::endl;

@@ -51,3 +51,31 @@ public struct GET_AddUserPacket
     public string type;
     public string add_username;
 }
+
+[Serializable]
+public struct MyExitPacket<T>
+{
+    public CommonPacket<T> common;
+}
+
+[Serializable]
+public struct GET_AnotherUserExitInfoPacket
+{
+    public string type;
+    public string exit_nickname;
+}
+
+[Serializable]
+public struct FrameAudioPacket<T>
+{
+    public CommonPacket<T> common;
+    public int channel;
+}
+
+[Serializable]
+public struct GET_AnotherSoundFramePacket
+{
+    public string type;
+    public float[] frame_audio;
+    public int channel;
+}
