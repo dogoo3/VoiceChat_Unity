@@ -82,8 +82,8 @@ public class RealTime_REC_NOW : MonoBehaviour
         {
             this.samples = new float[t_diff * this.channels];
             this.mic.GetData(this.samples, this.lastSample);
+            Debug.Log(samples.Length);
         }
-        Debug.Log(samples.Length);
         this.lastSample = t_pos;
     }
 

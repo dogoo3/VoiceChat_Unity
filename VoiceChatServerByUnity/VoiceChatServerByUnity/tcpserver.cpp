@@ -6,7 +6,7 @@
 TcpServer::TcpServer(int port) : port(port), serverSocket(INVALID_SOCKET), isRunning(false) {
     WSADATA wsaData;
 
-    // 클라이언트가 서버에 접속했을 때 
+    // 임의 초기화
     access_return_data["type"] = "login_result";
     access_return_data["content"] = true;
     access_return_data["timestamp"] = 0;
@@ -116,12 +116,36 @@ void TcpServer::HandleClient(SOCKET clientSocket, int clientId) {
                 }
                 else
                 {
+                    std::cout << clients.size() << std::endl;
                     std::cout << "정상닉네임" << std::endl;
                     access_return_data["type"] = "nickname_check_result";
                     access_return_data["content"] = true;
                     access_return_data["timestamp"] = time(0);
+                    access_return_data["mynickname"] = nickname;
+
                     clients[clientId].nickname = nickname; // 닉네임 저장
+                    std::cout << clients.size() << std::endl;
+
+                    std::vector<std::string> users_name;
+                    for (auto iter = clients.begin(); iter != clients.end(); iter++) // 닉네임들을 저장
+                    {
+                        users_name.push_back(iter->second.nickname);
+                    }
+                    access_return_data["users_name"] = users_name;
                     SendToClient(clientId, access_return_data);
+
+                    // 이미 방에 접속해 있는 유저들에게도 새로운 유저가 들어왔다는 것을 알려줘야 함
+                    for (auto iter = clients.begin(); iter != clients.end(); iter++) // 닉네임 중복 검사
+                    {
+                        if (iter->second.nickname != nickname) // 다른 클라이언트들에게 전송. 내 닉네임일 경우 전송하지 않음.
+                        {
+                            json temp;
+                            std::cout << nickname + "체크" << std::endl;
+                            temp["type"] = "add_user";
+                            temp["add_username"] = nickname;
+                            SendToClient(iter->first, temp);
+                        }
+                    }
                 }
             }
             if (type_name == "arraytest")
@@ -132,7 +156,7 @@ void TcpServer::HandleClient(SOCKET clientSocket, int clientId) {
                 std::cout << receivedJson["common"]["content"].size() << std::endl;
 
                 json tempjson;
-                float asd[3] = { receivedJson["common"]["content"][0], receivedJson["common"]["content"][12], receivedJson["common"]["content"][358] };
+                float asd[3] = { receivedJson["common"]["content"][0], receivedJson["common"]["content"][12], receivedJson["common"]["content"][1763] };
                 tempjson["type"] = "array_test_result";
                 tempjson["content"] = asd;
 

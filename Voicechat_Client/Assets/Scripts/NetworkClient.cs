@@ -18,8 +18,7 @@ public class NetworkClient : MonoBehaviour
     [SerializeField] private TMP_Text tmp_errormessage;
     [Space(50)]
     [SerializeField] private GameObject loginUI;
-    [SerializeField] private GameObject lobbyUI;
-    [SerializeField] private GameObject roomUI;
+    [SerializeField] private RoomManager roomUI;
 
     private TcpClient client;
     private NetworkStream stream;
@@ -127,8 +126,12 @@ public class NetworkClient : MonoBehaviour
                     if(t_receivedData.content) // 닉네임이 중복되지 않으면(true)
                     {
                         loginUI.SetActive(false);
-                        lobbyUI.SetActive(true);
-                        // 로비 화면으로 이동
+                        roomUI.gameObject.SetActive(true);
+
+                        // 몇 번째 입장인지 받아옴. 1~5가 받아와지고, 1이 첫번째.
+                        Debug.Log(t_receivedData.users_name.Length);
+                        // 방으로 이동하며, 방 안의 닉네임 설정
+                        roomUI.InitializeUserName(t_receivedData.mynickname, t_receivedData.users_name);
                     }
                     else
                     {
@@ -141,6 +144,10 @@ public class NetworkClient : MonoBehaviour
                     for(int i=0;i<t_asdf.content.Length;i++)
                         Debug.Log(t_asdf.content[i]);
                     Debug.Log(t_asdf.type);
+                    break;
+                case "add_user":
+                    GET_AddUserPacket t_adduserData = JsonUtility.FromJson<GET_AddUserPacket>(msg);
+                    roomUI.AddUser(t_adduserData.add_username);
                     break;
             }
         }

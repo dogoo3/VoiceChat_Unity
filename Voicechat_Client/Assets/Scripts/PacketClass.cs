@@ -28,6 +28,8 @@ public struct GET_NicknameCheck
     public string type;
     public bool content;
     public string timestamp;
+    public string mynickname;
+    public string[] users_name;
 }
 
 [Serializable]
@@ -41,4 +43,11 @@ public struct GET_ArrayTestPacket
 {
     public string type;
     public float[] content;
+}
+
+[Serializable]
+public struct GET_AddUserPacket
+{
+    public string type;
+    public string add_username;
 }

@@ -102,6 +102,7 @@ public class RealTime_REC_COLLECT : MonoBehaviour
                 //Debug.Log("Read happened");
                 this.previousReadUpdateId = readUpdateId;
 
+                Debug.Log(this.readSamples.Count);
                 this.source.clip = AudioClip.Create("Real_time", this.readSamples.Count, this.channels, 44100, false);
                 this.source.spatialBlend = 0;//2D sound
 

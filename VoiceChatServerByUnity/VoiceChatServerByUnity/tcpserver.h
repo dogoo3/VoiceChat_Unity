@@ -20,7 +20,7 @@ struct ClientData
 #include "json.hpp"
 using json = nlohmann::json;
 
-#define MAX_BUFFER_SIZE (32768)
+#define MAX_BUFFER_SIZE (28000)
 class TcpServer {
 public:
     TcpServer(int port);
